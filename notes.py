@@ -23,17 +23,17 @@ def get_note_freq(note):
 def get_freq_octave(freq, octave):
     return freq * (2 ** octave)
 
-parser = ap.ArgumentParser(prog='notes', description='Get the frequency of a note')
-parser.add_argument('note', type=str, help='Note name')
-parser.add_argument('octave', type=int, help='Octave number')
-parser.add_argument('-a', '--all', action='store_true', help='Print all notes')
-args = parser.parse_args()
-args.note = args.note.upper()
+if __name__ == '__main__':
+    parser = ap.ArgumentParser(prog='notes', description='Get the frequency of a note')
+    parser.add_argument('note', type=str, help='Note name')
+    parser.add_argument('octave', type=int, help='Octave number')
+    parser.add_argument('-a', '--all', action='store_true', help='Print all notes')
+    args = parser.parse_args()
+    args.note = args.note.upper()
 
-if args.all:
-    for note in notes:
-        print(note, notes[note])
-    exit()
-
-freq = get_note_freq(args.note)
-print(get_freq_octave(freq, args.octave))
+    if args.all:
+        for note in notes:
+            print(note, notes[note])
+        exit()
+    freq = get_note_freq(args.note)
+    print(get_freq_octave(freq, args.octave))

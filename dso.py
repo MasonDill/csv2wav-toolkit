@@ -4,30 +4,16 @@ import argparse as ap
 import matplotlib.pyplot as plt
 import scipy as sp
 
-def dso(input_file, sample_rate=44100, bit_depth=16, channels=1, duration=None):
+import common
+
+def dso(data, sample_rate=44100, bit_depth=16, channels=1, duration=None):
     #check paramter sanity
     if sample_rate <= 0:
         raise ValueError("sample_rate must be greater than 0")
     if channels <= 0:
         raise ValueError("channels must be greater than 0")
-    if input_file is None:
-        raise ValueError("input_file must be provided")
-    
-    #infer dtype
-    if(bit_depth == 16):
-        dtype = np.float16
-    elif(bit_depth == 32):
-        dtype = np.float32
-    elif(bit_depth == 64):
-        dtype = np.float64
-    else:
-        raise ValueError("bit_depth must be 16, 32 or 64")
-        
-    #read csv data
-    try: data = np.loadtxt(input_file, delimiter=',', dtype=dtype)
-    except Exception as e:
-        print("Could not read csv data:", e)
-        return None
+    if data is None:
+        raise ValueError("data must be provided")
     
     if duration is None:
         duration = data.size / sample_rate
@@ -61,6 +47,7 @@ def fourier_transform(data, sample_rate, duration):
     fft_result = np.fft.fft(data)
     frequencies = np.fft.fftfreq(len(data)) * sample_rate
 
+    plt.clf()
     # Plot the Fourier transform
     plt.plot(frequencies, np.abs(fft_result))
 
@@ -74,13 +61,15 @@ def fourier_transform(data, sample_rate, duration):
     #save the plot
     plt.savefig('fourier.svg')
 
+if __name__ == '__main__':
+    parser = ap.ArgumentParser(prog='dso', description='Digital Signal Oscilloscope')
+    parser.add_argument('input_file', type=str, help='Input file')
+    parser.add_argument('-s', '--sample_rate', type=int, default=44100, help='Sample rate')
+    parser.add_argument('-b', '--bit_depth', type=int, default=16, help='Bit depth')
+    parser.add_argument('-c', '--channels', type=int, default=1, help='Number of channels')
+    parser.add_argument('-t', '--duration', type=float, default=None, help='Duration of time to plot')
+    parser.add_argument('-d', '--delimiter', type=str, default=',', help='Delimiter for csv file')
+    args = parser.parse_args()
 
-parser = ap.ArgumentParser(prog='dso', description='Digital Signal Oscilloscope')
-parser.add_argument('input_file', type=str, help='Input file')
-parser.add_argument('-s', '--sample_rate', type=int, default=44100, help='Sample rate')
-parser.add_argument('-b', '--bit_depth', type=int, default=16, help='Bit depth')
-parser.add_argument('-c', '--channels', type=int, default=1, help='Number of channels')
-parser.add_argument('-t', '--duration', type=float, default=None, help='Duration of time to plot')
-args = parser.parse_args()
-
-dso(args.input_file, args.sample_rate, args.bit_depth, args.channels, args.duration)
+    data = common.read_csv(args.input_file, args.delimiter, args.bit_depth, args.channels)
+    dso(data, args.sample_rate, args.bit_depth, args.channels, args.duration)

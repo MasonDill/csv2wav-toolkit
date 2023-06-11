@@ -3,7 +3,9 @@ import numpy as np
 import argparse as ap
 import scipy as sp
 
-def dfg(frequency, output_file, duration, sample_rate=44100, bit_depth=16, channels=1, function='sin'):
+import common
+
+def dfg(frequency, duration, sample_rate=44100, bit_depth=16, channels=1, function='sin', data=None, start_time=0):
     #check paramter sanity
     if sample_rate <= 0:
         raise ValueError("sample_rate must be greater than 0")
@@ -11,8 +13,6 @@ def dfg(frequency, output_file, duration, sample_rate=44100, bit_depth=16, chann
         raise ValueError("channels must be greater than 0")
     if frequency is None:
         raise ValueError("frequency must be provided")
-    if output_file is None:
-        raise ValueError("output_file must be provided")
     if duration is None:
         raise ValueError("duration must be provided")
     if duration <= 0:
@@ -28,8 +28,8 @@ def dfg(frequency, output_file, duration, sample_rate=44100, bit_depth=16, chann
     else:
         raise ValueError("bit_depth must be 16, 32 or 64")
         
-    #create csv data
-    data = np.zeros((duration, sample_rate), dtype=dtype)
+    if data is None:
+        data = np.zeros(duration*sample_rate, dtype=dtype)
 
     #create a pointer to the function
     if function == 'sin':
@@ -52,26 +52,29 @@ def dfg(frequency, output_file, duration, sample_rate=44100, bit_depth=16, chann
         raise ValueError("function not supported")
     
     #generate wave
-    for i in range(duration):
-        for j in range(sample_rate):
-            data[i][j] = fun_ptr.__call__(2*np.pi*j* frequency/sample_rate)
-
-    print("Samples:", data.size)
+    start_index = time_to_index(start_time, sample_rate)
+    end_index = time_to_index(start_time + duration, sample_rate)
+    for i in range(start_index, end_index):
+            coeff = 2*np.pi*(i - start_index)* frequency/sample_rate
+            data[i] = fun_ptr.__call__(coeff)
     
-    #write csv data
-    try: np.savetxt(output_file, data, delimiter=',', fmt='%f')
-    except Exception as e:
-        print("Could not write csv data:", e)
-        return None
+    return data
 
-parser = ap.ArgumentParser(prog='dfg', description='Digital Function Generator')
-parser.add_argument('frequency', type=float, help='Frequency of the wave')
-parser.add_argument('output_file', type=str, help='Output file name')
-parser.add_argument('duration', type=int, help='Duration of the wave in seconds')
-parser.add_argument('-s', '--sample_rate', type=int, default=44100, help='Sample rate of the wave')
-parser.add_argument('-b', '--bit_depth', type=int, default=16, help='Bit depth of the wave')
-parser.add_argument('-c', '--channels', type=int, default=1, help='Number of channels of the wave')
-parser.add_argument('-f', '--function', type=str, default='sin', help='Function to generate the wave')
-args = parser.parse_args()
+def time_to_index(time, sample_rate):
+    return int(time * sample_rate)
 
-dfg(args.frequency, args.output_file, args.duration, args.sample_rate, args.bit_depth, args.channels, args.function)
+    
+if __name__ == '__main__':
+    parser = ap.ArgumentParser(prog='dfg', description='Digital Function Generator')
+    parser.add_argument('frequency', type=float, help='Frequency of the wave')
+    parser.add_argument('output_file', type=str, help='Output file name')
+    parser.add_argument('duration', type=int, help='Duration of the wave in seconds')
+    parser.add_argument('-s', '--sample_rate', type=int, default=44100, help='Sample rate of the wave')
+    parser.add_argument('-b', '--bit_depth', type=int, default=16, help='Bit depth of the wave')
+    parser.add_argument('-c', '--channels', type=int, default=1, help='Number of channels of the wave')
+    parser.add_argument('-f', '--function', type=str, default='sin', help='Function to generate the wave')
+    parser.add_argument('-d', '--delimiter', type=str, default=',', help='Delimiter for csv file')
+    args = parser.parse_args()
+
+    data = dfg(args.frequency, args.duration, args.sample_rate, args.bit_depth, args.channels, args.function)
+    common.save_csv(data, args.output_file, args.channels, args.delimiter)
