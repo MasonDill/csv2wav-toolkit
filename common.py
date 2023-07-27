@@ -20,6 +20,7 @@ def infer_dtype(bit_depth):
     
     return dtype
 
+
 def read_csv(input_file, delimiter=',', bit_depth=16, channels=1):
     dtype = infer_dtype(bit_depth)
     #parse csv
