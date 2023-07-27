@@ -1,3 +1,4 @@
+#Transform a csv file into a wav file
 import numpy as np
 import wave as wv
 import argparse as ap
@@ -13,7 +14,6 @@ def csv2wav(data, output_file, delimiter=',', sample_rate=44100, bit_depth=16, c
     if channels <= 0:
         raise ValueError("channels must be greater than 0")
     
-    
     #write wav
     wave_file = wv.open(output_file, 'w')
     wave_file.setparams((channels, bit_depth//8, sample_rate, len(data), 'NONE', 'not compressed'))
@@ -21,7 +21,7 @@ def csv2wav(data, output_file, delimiter=',', sample_rate=44100, bit_depth=16, c
     wave_file.close()
 
 if __name__ == '__main__':
-    parser = ap.ArgumentParser(prog='csv2wav', description='Converts a csv file to a wav file')
+    parser = ap.ArgumentParser(prog='csv2wav', description='Convert a csv file to a wav file')
     parser.add_argument('input_file', type=str, help='Input file name')
     parser.add_argument('output_file', type=str, help='Output file name')
     parser.add_argument('-d', '--delimiter', type=str, default=',', help='Delimiter of the csv file')

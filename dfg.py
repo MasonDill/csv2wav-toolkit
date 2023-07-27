@@ -56,7 +56,7 @@ def dfg(frequency, duration, sample_rate=44100, bit_depth=16, channels=1, functi
     end_index = time_to_index(start_time + duration, sample_rate)
     for i in range(start_index, end_index):
             coeff = 2*np.pi*(i - start_index)* frequency/sample_rate
-            data[i] = fun_ptr.__call__(coeff)
+            data[i] += fun_ptr.__call__(coeff)
     
     return data
 
@@ -78,3 +78,7 @@ if __name__ == '__main__':
 
     data = dfg(args.frequency, args.duration, args.sample_rate, args.bit_depth, args.channels, args.function)
     common.save_csv(data, args.output_file, args.channels, args.delimiter)
+
+
+#define the composer digital signal class with frequency, duration, sample_rate=44100, bit_depth=16, channels=1, function='sin'
+class cds:
