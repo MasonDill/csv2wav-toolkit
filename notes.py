@@ -1,6 +1,6 @@
 import argparse as ap
 
-notes = {
+frequencies = {
     'C': 261.63,
     'C#': 277.18,
     'D': 293.66,
@@ -15,13 +15,53 @@ notes = {
     'B': 493.88
 }
 
-def get_note_freq(note):
-    if note not in notes:
+def get_center_note_freq(note):
+    if note not in frequencies:
         raise ValueError("Invalid note")
-    return notes[note]
+    return frequencies[note]
 
 def get_freq_octave(freq, octave):
-    return freq * (2 ** octave)
+    return freq * (2 ** (octave-4))
+
+def get_note_freq(note, octave):
+    base_freq = get_center_note_freq(note)
+    print(get_freq_octave(base_freq, octave))
+
+def next_tone(note, octave):
+    notes = list(frequencies.keys())
+    tone = notes.index(note)+2 # move up two half steps
+
+    if(tone >= len(tone)):
+        next_octave = octave+1
+    else:
+        next_octave = octave
+
+    tone %= len(notes)
+    next_note = notes[tone]
+
+    return (next_note, next_octave)
+
+def create_extended_chord(note, low_octave, high_octave):
+    #typical chord is a root, third, fifth, etc
+    chord = [[note, low_octave]]
+
+    curr_octave = low_octave
+    curr_note = note
+    while(curr_octave <= high_octave):
+        (curr_note, curr_octave) = next_tone(curr_note, curr_octave)
+        chord.append([curr_note, curr_octave])
+
+    return chord
+
+def create_extended_chord_freqencies(note, low_octave, high_octave):
+    chord = create_extended_chord(note, low_octave, high_octave)
+    chord_freqs =[]
+    for note_pair in chord:
+        freq = get_note_freq(note_pair[0], note_pair[1])
+        chord_freqs.append(freq)
+
+    return (chord, chord_freqs)
+        
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog='notes', description='Get the frequency of a note')
@@ -32,8 +72,7 @@ if __name__ == '__main__':
     args.note = args.note.upper()
 
     if args.all:
-        for note in notes:
-            print(note, notes[note])
+        for note in frequencies:
+            print(note, frequencies[note])
         exit()
-    freq = get_note_freq(args.note)
-    print(get_freq_octave(freq, args.octave))
+    get_note_freq(args.note, args.octave)
