@@ -23,7 +23,7 @@ def compose(script, output_file, sample_rate=44100, bit_depth=16, channels=1, sa
 
         start = float(line[2])
         duration = float(line[3])
-        freq = notes.get_freq_octave(notes.get_note_freq(note), octave)
+        freq = notes.get_note_freq(note, octave)
         wave = cds.wave(frequency=freq, duration=duration, sample_rate=sample_rate, bit_depth=bit_depth, channels=channels, function='sin', start_time=start)
         waves.append(wave)
 
