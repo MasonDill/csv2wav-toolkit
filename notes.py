@@ -76,12 +76,34 @@ def create_extended_chord(scale, root_note, low_octave, end_note, high_octave):
 
     return chord
 
-def parse_note_octave(pair: str) -> tuple[str, int]:
-    note = ''.join([char for char in pair if char.isalpha() or char == '#']).upper()
-    octave = ''.join([char for char in pair if char.isdigit() or char == '-'])
+def parse_note(haystack: str) -> str:
+    note = ''
+    for char in haystack:
+        char = char.upper()
+        if not(char.isalpha() or char == '#'):
+            break
+        note += char
+    
+    if (len(note) == 2) and (note[1] == 'B') and (note[0] not in ['C', 'F']):
+        previous_index = CHROMATIC_SCALE.index(note[0]) - 1
+        note = CHROMATIC_SCALE[previous_index]
 
     if note not in CHROMATIC_SCALE:
         raise ValueError(f"Invalid note '{note}'. Provide a note from the western chromatic scale.")
+    
+    return note
+
+def parse_note_octave_pair(pair: str) -> tuple[str, int]:
+    note = parse_note(pair)
+
+    note_end_index = 0
+    for char in pair:
+        char = char.upper()
+        if char.isalpha() or char in ['#', 'B']:
+            note_end_index += 1
+            continue
+        break
+    octave = pair[note_end_index:]
     
     if not octave:
         raise ValueError("Missing octave. Provide an integer.")
@@ -123,7 +145,7 @@ if __name__ == '__main__':
     elif args.notes:
         for pair in args.notes.split(' '):
             try:
-                (note, octave) = parse_note_octave(args.notes)
+                (note, octave) = parse_note_octave_pair(args.notes)
             except ValueError as e:
                 print(f"Error: {e}")
                 exit()
@@ -137,6 +159,6 @@ if __name__ == '__main__':
     elif args.extended_chord:
         chord_info = args.extended_chord.split(' ')
         scale = parse_scale(chord_info[0])
-        (start_note, start_octave) = parse_note_octave(chord_info[1])
-        (end_note, end_octave) = parse_note_octave(chord_info[2])
+        (start_note, start_octave) = parse_note_octave_pair(chord_info[1])
+        (end_note, end_octave) = parse_note_octave_pair(chord_info[2])
         print(create_extended_chord(scale, start_note, start_octave, end_note, end_octave))
