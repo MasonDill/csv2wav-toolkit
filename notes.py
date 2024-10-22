@@ -50,7 +50,7 @@ def get_freq_octave(freq, octave):
 
 def get_note_freq(note, octave):
     base_freq = get_center_note_freq(note)
-    print(get_freq_octave(base_freq, octave))
+    return get_freq_octave(base_freq, octave)
 
 def next_tone(note, octave, scale):
     tone = scale.index(note)+2
@@ -83,7 +83,7 @@ def parse_note_octave(pair):
     if note not in CHROMATIC_SCALE:
         ap.ArgumentError("Invalid note: " + note)
 
-    octave = pair[-1]
+    octave = int(pair[-1])
     if not (isinstance(octave, int)):
         ap.ArgumentError("Invalid octave: " +octave)
 
@@ -106,20 +106,19 @@ def parse_scale(pair):
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog='notes', description='Get the frequency of a note')
-    parser.add_argument('-n', '--notes', type=list[str], help='Print frequency of a set of notes: <note><octave> <note><octave> <note><octave>...')
+    parser.add_argument('-n', '--notes', type=str, help='Print frequency of a set of notes: <note><octave> <note><octave> <note><octave>...')
     parser.add_argument('-a', '--all', action='store_true', help='Print all notes')
     parser.add_argument('-s', '--scale', type=str, help='Scale: <root>[M|m]')
     parser.add_argument('--extended-chord', type=list[str], help='Print notes of an extended chord: <root>[M|m] <start note><octave> <end note><octave>')
     args = parser.parse_args()
-    args.note = args.note.upper()
 
     if args.all:
         for note in CHROMATIC_FREQ_MAP:
             print(note, CHROMATIC_FREQ_MAP[note])
 
     elif args.notes:
-        for pair in args.note:
-            (note, octave) = parse_note_octave(args.note)
+        for pair in args.notes.split(' '):
+            (note, octave) = parse_note_octave(args.notes)
             print(get_note_freq(note, octave))
 
     elif args.scale:
