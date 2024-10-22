@@ -76,21 +76,25 @@ def create_extended_chord(scale, root_note, low_octave, end_note, high_octave):
 
     return chord
 
-def parse_note_octave(pair):
-    note = pair[:-1].upper()
-    note = note.upper()
+def parse_note_octave(pair: str) -> tuple[str, int]:
+    note = ''.join([char for char in pair if char.isalpha() or char == '#']).upper()
+    octave = ''.join([char for char in pair if char.isdigit() or char == '-'])
 
     if note not in CHROMATIC_SCALE:
-        ap.ArgumentError("Invalid note: " + note)
-
-    octave = int(pair[-1])
-    if not (isinstance(octave, int)):
-        ap.ArgumentError("Invalid octave: " +octave)
+        raise ValueError(f"Invalid note '{note}'. Provide a note from the western chromatic scale.")
+    
+    if not octave:
+        raise ValueError("Missing octave. Provide an integer.")
+    
+    try:
+        octave = int(octave)
+    except ValueError:
+        raise ValueError(f"Invalid octave '{octave}'. Provide an integer octave.")
 
     return (note, octave)
 
 def parse_scale(pair):
-    root = pair[::-1]
+    root = pair[:-1]
     if root not in CHROMATIC_SCALE:
         ap.ArgumentError("Invalid root note: " +root)
 
@@ -109,7 +113,7 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--notes', type=str, help='Print frequency of a set of notes: <note><octave> <note><octave> <note><octave>...')
     parser.add_argument('-a', '--all', action='store_true', help='Print all notes')
     parser.add_argument('-s', '--scale', type=str, help='Scale: <root>[M|m]')
-    parser.add_argument('--extended-chord', type=list[str], help='Print notes of an extended chord: <root>[M|m] <start note><octave> <end note><octave>')
+    parser.add_argument('--extended-chord', type=str, help='Print notes of an extended chord: <root>[M|m] <start note><octave> <end note><octave>')
     args = parser.parse_args()
 
     if args.all:
@@ -118,7 +122,12 @@ if __name__ == '__main__':
 
     elif args.notes:
         for pair in args.notes.split(' '):
-            (note, octave) = parse_note_octave(args.notes)
+            try:
+                (note, octave) = parse_note_octave(args.notes)
+            except ValueError as e:
+                print(f"Error: {e}")
+                exit()
+
             print(get_note_freq(note, octave))
 
     elif args.scale:
@@ -126,7 +135,8 @@ if __name__ == '__main__':
         print(scale.get_notes())
     
     elif args.extended_chord:
-        scale = parse_scale(args.extended_chord[0])
-        (start_note, start_octave) = parse_note_octave(args.extended_chord[1])
-        (end_note, end_octave) = parse_note_octave(args.extended_chord[2])
+        chord_info = args.extended_chord.split(' ')
+        scale = parse_scale(chord_info[0])
+        (start_note, start_octave) = parse_note_octave(chord_info[1])
+        (end_note, end_octave) = parse_note_octave(chord_info[2])
         print(create_extended_chord(scale, start_note, start_octave, end_note, end_octave))
