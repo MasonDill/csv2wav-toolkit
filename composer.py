@@ -1,4 +1,4 @@
-import notes as notes
+from notes import Note
 import dfg as dfg
 import dso as dso
 import csv2wav as csv2wav
@@ -11,31 +11,28 @@ import argparse as ap
 #Generate a csv file with the tuples
 #Generate a wav file from the csv file
 
-def compose(script, output_file, sample_rate=44100, bit_depth=16, channels=1, save_csv=False, save_wav=True, save_scope=False):
+def compose(script, output_file, sample_rate=44100, bit_depth=16, channels=1, save_csv=False, save_scope=False):
     #check paramter sanity
     if output_file is None:
         raise ValueError("output_file must be specified")
     
     waves = []
     for line in script:
-        note = line[0]
-        octave = int(line[1])
+        note = Note(line[0])
+        start = float(line[1])
+        duration = float(line[2])
 
-        start = float(line[2])
-        duration = float(line[3])
-        freq = notes.get_note_freq(note, octave)
+        freq = note.get_freq()
         wave = cds.wave(frequency=freq, duration=duration, sample_rate=sample_rate, bit_depth=bit_depth, channels=channels, function='sin', start_time=start)
         waves.append(wave)
 
     signal = dfg.dfg(*waves)
-
-    #generate wav file
-    if save_wav:
-        csv2wav.csv2wav(signal.data, output_file, bit_depth=bit_depth, channels=channels, sample_rate=sample_rate)
+    csv2wav.csv2wav(signal.data, output_file + '.wav', bit_depth=bit_depth, channels=channels, sample_rate=sample_rate)
+    
     if save_csv:
         common.save_csv(signal.data, output_file + '.csv', channels=channels, delimiter=',')
     if save_scope:
-        dso.dso(signal.data, output_file + '.png', sample_rate=sample_rate, bit_depth=bit_depth, channels=channels)
+        dso.dso(signal.data, output_file + '.svg', sample_rate=sample_rate, bit_depth=bit_depth, channels=channels)
 
 def compile_composer_script(input_file):
     data = np.genfromtxt(input_file, delimiter=',', dtype=str)
