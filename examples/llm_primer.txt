@@ -1,0 +1,13 @@
+I have a program that can synthesize a wave file from a csv file. It takes data in this format: <note><octave>, <start time>, <duration>
+Start time and duration are as read as floats, note is a pitch class from the chromatic scale, and the octave is an integer.
+
+Here is an example of the C major chord played for 1 second:
+C4, 0, 1
+E4, 0, 1
+G4, 0, 1
+B4, 0, 1
+D5, 0, 1
+F5, 0, 1
+A5, 0, 1
+
+Help me compose some music!

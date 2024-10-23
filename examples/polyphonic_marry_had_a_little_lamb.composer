@@ -1,0 +1,76 @@
+# Melody line
+E4, 0.0, 0.5     # Ma-
+D4, 0.5, 0.5     # -ry
+C4, 1.0, 0.5     # had
+D4, 1.5, 0.5     # a
+E4, 2.0, 0.5     # lit-
+E4, 2.5, 0.5     # -tle
+E4, 3.0, 1.0     # lamb
+D4, 4.0, 0.5     # lit-
+D4, 4.5, 0.5     # -tle
+D4, 5.0, 1.0     # lamb
+E4, 6.0, 0.5     # lit-
+G4, 6.5, 0.5     # -tle
+G4, 7.0, 1.0     # lamb
+
+# Second phrase
+E4, 8.0, 0.5     # Ma-
+D4, 8.5, 0.5     # -ry
+C4, 9.0, 0.5     # had
+D4, 9.5, 0.5     # a
+E4, 10.0, 0.5    # lit-
+E4, 10.5, 0.5    # -tle
+E4, 11.0, 0.5    # lamb
+E4, 11.5, 0.5    # whose
+D4, 12.0, 0.5    # fleece
+D4, 12.5, 0.5    # was
+E4, 13.0, 0.5    # white
+D4, 13.5, 0.5    # as
+C4, 14.0, 2.0    # snow
+
+# Harmony - C major chord (root position)
+C3, 0.0, 2.0     # Underlying C chord for "Mary had a"
+G3, 0.0, 2.0
+E3, 0.0, 2.0
+
+# G7 chord
+G3, 2.0, 2.0     # G7 chord for "little lamb"
+B3, 2.0, 2.0
+F3, 2.0, 2.0
+D3, 2.0, 2.0
+
+# C chord
+C3, 4.0, 2.0     # Back to C for "little lamb"
+G3, 4.0, 2.0
+E3, 4.0, 2.0
+
+# F chord followed by G7
+F3, 6.0, 1.0     # F chord
+A3, 6.0, 1.0
+C4, 6.0, 1.0
+G3, 7.0, 1.0     # G7 chord
+B3, 7.0, 1.0
+D4, 7.0, 1.0
+F4, 7.0, 1.0
+
+# Second phrase harmonization
+C3, 8.0, 2.0     # C chord
+E3, 8.0, 2.0
+G3, 8.0, 2.0
+
+G3, 10.0, 2.0    # G7 chord
+B3, 10.0, 2.0
+D4, 10.0, 2.0
+F4, 10.0, 2.0
+
+C3, 12.0, 2.0    # C chord
+E3, 12.0, 2.0
+G3, 12.0, 2.0
+
+G3, 14.0, 2.0    # Final G7 to C resolution
+B3, 14.0, 2.0
+D4, 14.0, 2.0
+F4, 14.0, 2.0
+C3, 16.0, 2.0    # Final C chord
+E3, 16.0, 2.0
+G3, 16.0, 2.0
