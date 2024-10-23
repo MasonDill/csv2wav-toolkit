@@ -32,10 +32,10 @@ def compose(script, output_file, sample_rate=44100, bit_depth=16, channels=1, sa
     if save_csv:
         common.save_csv(signal.data, output_file + '.csv', channels=channels, delimiter=',')
     if save_scope:
-        dso.dso(signal.data, output_file + '.svg', sample_rate=sample_rate, bit_depth=bit_depth, channels=channels)
+        dso.dso(signal.data, output_file, sample_rate=sample_rate, bit_depth=bit_depth, channels=channels)
 
 def compile_composer_script(input_file):
-    data = np.genfromtxt(input_file, delimiter=',', dtype=str)
+    data = np.genfromtxt(input_file, delimiter=',', dtype=str, comments="#")
     return data
 
 if __name__ == '__main__':
