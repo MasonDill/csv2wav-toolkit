@@ -125,26 +125,26 @@ def parse_scale(pair):
     return Scale(root, scale_type)
 
 if __name__ == '__main__':
-    parser = ap.ArgumentParser(prog='notes', description='Get the frequency of a note')
-    parser.add_argument('-n', '--notes', type=str, help='Print frequency of a set of notes: <note><octave> <note><octave> <note><octave>...')
+    parser = ap.ArgumentParser(prog='notes', description='Get information about notes, frequencies, scales, or extended chords')
+    parser.add_argument('-n', '--notes', nargs='+', type=str, help='Print frequency of a set of notes: <note><octave> <note><octave> <note><octave>...')
     parser.add_argument('-a', '--all', action='store_true', help='Print all notes')
     parser.add_argument('-s', '--scale', type=str, help='Scale: <root>[M|m]')
-    parser.add_argument('--extended-chord', type=str, help='Print notes of an extended chord: <root>[M|m] <start note><octave> <end note><octave>')
+    parser.add_argument('--extended-chord', nargs='+', type=str, help='Print notes of an extended chord: <root>[M|m] <start note><octave> <end note><octave>')
     args = parser.parse_args()
 
     if args.all:
         for note in CHROMATIC_FREQ_MAP:
-            print(note, CHROMATIC_FREQ_MAP[note])
+            print(note, CHROMATIC_FREQ_MAP[note])    
 
     elif args.notes:
-        for pair in args.notes.split(' '):
+        for pair in args.notes:
             try:
-                (note, octave) = parse_note_octave_pair(args.notes)
+                (note, octave) = parse_note_octave_pair(pair)
             except ValueError as e:
                 print(f"Error: {e}")
                 exit()
 
-            print(get_note_freq(note, octave))
+            print(pair, "-", get_note_freq(note, octave))
 
     elif args.scale:
         try:
@@ -155,8 +155,7 @@ if __name__ == '__main__':
         print(scale.get_notes())
     
     elif args.extended_chord:
-        chord_info = args.extended_chord.split(' ')
-        scale = parse_scale(chord_info[0])
-        (start_note, start_octave) = parse_note_octave_pair(chord_info[1])
-        (end_note, end_octave) = parse_note_octave_pair(chord_info[2])
+        scale = parse_scale(args.extended_chord[0])
+        (start_note, start_octave) = parse_note_octave_pair(args.extended_chord[1])
+        (end_note, end_octave) = parse_note_octave_pair(args.extended_chord[2])
         print(create_extended_chord(scale, start_note, start_octave, end_note, end_octave))
