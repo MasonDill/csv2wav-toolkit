@@ -22,107 +22,114 @@ class Step(Enum):
     WHOLE = 2 
 
 CHROMATIC_SCALE = list(CHROMATIC_FREQ_MAP.keys())   
-WESTERN_HEPTATONIC_MAJOR_SCALE = [Step.WHOLE, Step.WHOLE, Step.HALF, Step.WHOLE, Step.WHOLE, Step.WHOLE, Step.HALF]
-WESTERN_HEPTATONIC_MINOR_SCALE = [Step.WHOLE, Step.HALF, Step.WHOLE, Step.WHOLE, Step.HALF, Step.WHOLE, Step.WHOLE]
+WESTERN_HEPTATONIC_MAJOR_SCALE = (Step.WHOLE, Step.WHOLE, Step.HALF, Step.WHOLE, Step.WHOLE, Step.WHOLE, Step.HALF)
+WESTERN_HEPTATONIC_MINOR_SCALE = (Step.WHOLE, Step.HALF, Step.WHOLE, Step.WHOLE, Step.HALF, Step.WHOLE, Step.WHOLE)
+
+# Helper function: Get the pitch Class from a Note (e.g. C0) or Scale (e.g. CM)
+def parse_pitch_class(haystack: str) -> str:
+        pitch_class = ''
+
+        note_end_index = 0
+        for char in haystack:
+            char = char.upper()
+            if not(char in ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G']):
+                break
+            pitch_class += char
+            note_end_index += 1
+        
+        if (len(pitch_class) == 2) and (pitch_class[1] == 'B') and (pitch_class[0] not in ['C', 'F']):
+            previous_index = CHROMATIC_SCALE.index(pitch_class[0]) - 1
+            pitch_class = CHROMATIC_SCALE[previous_index]
+
+        if pitch_class not in CHROMATIC_SCALE:
+            raise ValueError(f"Invalid note '{pitch_class}'. Provide a note from the western chromatic scale.")
+        
+        return pitch_class, note_end_index
+
+class Note:
+    def __init__(self, pair: str):
+        self.pitch_class, note_end_index = parse_pitch_class(pair)
+        octave = pair[note_end_index:]
+        
+        if not octave:
+            raise ValueError("Missing octave. Provide an integer.")
+        
+        try:
+            octave = int(octave)
+        except ValueError:
+            raise ValueError(f"Invalid octave '{octave}'. Provide an integer octave.")
+
+        self.octave = octave
+
+    def get_freq(self):
+        base_freq = CHROMATIC_FREQ_MAP[self.pitch_class]
+        return base_freq * (2 ** (self.octave-4))
+        
 
 class Scale:
-    def __init__(self, root_note, pattern):
-        self.root_note = root_note
-        self.pattern = pattern
+    def __init__(self, pair: str):
+        pitch_class, note_end_index = parse_pitch_class(pair)
 
-    def get_notes(self):
-        root_index = CHROMATIC_SCALE.index(self.root_note)
-        scale_notes = [self.root_note]
+        scale_type = pair[note_end_index:]
+        if(scale_type not in ["M","m"]):
+            raise ValueError("Invalid scale type " +scale_type)
+
+        self.start_pitch_class = pitch_class
+        self.type = scale_type
+    
+    def get_note_intervals(self) -> tuple[Step]:
+        if(self.type == "M"):
+            scale_type = WESTERN_HEPTATONIC_MAJOR_SCALE
+        elif(self.type == "m"):
+            scale_type = WESTERN_HEPTATONIC_MINOR_SCALE
+        else:
+            raise ValueError("Invalid scale type " +self.type)
+        
+        return scale_type
+        
+    def get_note_pattern(self) -> list:
+        root_index = CHROMATIC_SCALE.index(self.start_pitch_class)
+        scale_notes = [self.start_pitch_class]
         
         current_index = root_index
-        for step in self.pattern:
+        for step in self.get_note_intervals():
             current_index = (current_index + step.value) % len(CHROMATIC_SCALE)
             scale_notes.append(CHROMATIC_SCALE[current_index])
         
         return scale_notes
 
-def get_middle_note_freq(note):
-    if note not in CHROMATIC_FREQ_MAP:
-        raise ValueError("Invalid note")
-    return CHROMATIC_FREQ_MAP[note]
+    def __str__(self) -> str:
+        return str(self.get_note_pattern())
 
-def get_freq_octave(freq, octave):
-    return freq * (2 ** (octave-4))
+class Chord:
+    def __init__(self, scale: Scale, root_note: Note, end_note: Note):
+        notes = [[root_note]]
 
-def get_note_freq(note, octave):
-    base_freq = get_middle_note_freq(note)
-    return get_freq_octave(base_freq, octave)
+        curr_note = root_note
+        while(curr_note.octave <= end_note.octave and scale.get_note_pattern().index(curr_note) < scale.get_note_pattern().index(end_note)):
+            curr_note = self._next_note(curr_note, scale)
+            notes.append(curr_note)
+        
+        self.notes = notes
 
-def next_tone(note, octave, scale):
-    tone = scale.index(note)+2
+    def _next_note(self, note: Note, scale: Scale) -> Note:
+        if note.pitch_class not in Scale.get_note_pattern():
+            raise ValueError(f"Note {note.pitch_class} does not exist in scale {scale.start_pitch_class}{scale.type}")
 
-    if(tone >= len(scale)):
-        next_octave = octave+1
-    else:
-        next_octave = octave
+        next_pitch_class_index = scale.get_note_pattern().index(note)+2
 
-    tone %= len(scale)
-    next_note = scale[tone]
+        if(next_pitch_class_index >= len(scale.get_note_pattern())):
+            next_octave = note.octave+1
+        else:
+            next_octave = note.octave
 
-    return (next_note, next_octave)
+        next_pitch_class_index %= len(scale.get_note_pattern())
+        next_pitch_class = scale.get_note_pattern()[next_pitch_class_index]
 
-def create_extended_chord(scale, root_note, low_octave, end_note, high_octave):
-    chord = [[root_note, low_octave]]
+        return Note(next_pitch_class, next_octave)
 
-    curr_octave = low_octave
-    curr_note = root_note
-    while(curr_octave <= high_octave and scale.index(curr_note) < scale.index(end_note)):
-        (curr_note, curr_octave) = next_tone(curr_note, curr_octave, scale)
-        chord.append([curr_note, curr_octave])
-
-    return chord
-
-def parse_note(haystack: str) -> str:
-    note = ''
-
-    note_end_index = 0
-    for char in haystack:
-        char = char.upper()
-        if not(char in ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G']):
-            break
-        note += char
-        note_end_index += 1
-    
-    if (len(note) == 2) and (note[1] == 'B') and (note[0] not in ['C', 'F']):
-        previous_index = CHROMATIC_SCALE.index(note[0]) - 1
-        note = CHROMATIC_SCALE[previous_index]
-
-    if note not in CHROMATIC_SCALE:
-        raise ValueError(f"Invalid note '{note}'. Provide a note from the western chromatic scale.")
-    
-    return note, note_end_index
-
-def parse_note_octave_pair(pair: str) -> tuple[str, int]:
-    note, note_end_index = parse_note(pair)
-    octave = pair[note_end_index:]
-    
-    if not octave:
-        raise ValueError("Missing octave. Provide an integer.")
-    
-    try:
-        octave = int(octave)
-    except ValueError:
-        raise ValueError(f"Invalid octave '{octave}'. Provide an integer octave.")
-
-    return (note, octave)
-
-def parse_scale(pair):
-    root, note_end_index = parse_note(pair)
-
-    scale_type = pair[note_end_index:]
-    if(scale_type == "M"):
-        scale_type = WESTERN_HEPTATONIC_MAJOR_SCALE
-    elif(scale_type == "m"):
-        scale_type = WESTERN_HEPTATONIC_MINOR_SCALE
-    else:
-        raise ValueError("Invalid scale type " +scale_type)
-
-    return Scale(root, scale_type)
+    def __str__(self) -> str:
+        return str(self.notes)
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog='notes', description='Get information about notes, frequencies, scales, or extended chords')
@@ -139,23 +146,24 @@ if __name__ == '__main__':
     elif args.notes:
         for pair in args.notes:
             try:
-                (note, octave) = parse_note_octave_pair(pair)
+                note = Note(pair)
             except ValueError as e:
                 print(f"Error: {e}")
                 exit()
 
-            print(pair, "-", get_note_freq(note, octave))
+            print(pair, "-", note.get_freq())
 
     elif args.scale:
         try:
-            scale = parse_scale(args.scale)
+            scale = Scale(args.scale)
         except ValueError as e:
                 print(f"Error: {e}")
                 exit()
-        print(scale.get_notes())
+        print(scale.get_note_pattern())
     
     elif args.extended_chord:
-        scale = parse_scale(args.extended_chord[0])
-        (start_note, start_octave) = parse_note_octave_pair(args.extended_chord[1])
-        (end_note, end_octave) = parse_note_octave_pair(args.extended_chord[2])
-        print(create_extended_chord(scale, start_note, start_octave, end_note, end_octave))
+        scale = Scale(args.extended_chord[0])
+        root_note = Note(args.extended_chord[1])
+        end_note = Note(args.extended_chord[2])
+        chord = Chord(scale, root_note, end_note)
+        print(chord)
