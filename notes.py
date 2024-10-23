@@ -109,7 +109,7 @@ class Chord:
         notes = [root_note]
 
         curr_note = root_note
-        while((curr_note.octave <= end_note.octave) or (scale.get_note_pattern().index(curr_note.pitch_class) <= scale.get_note_pattern().index(end_note.pitch_class))):
+        while((curr_note.octave < end_note.octave) or (scale.get_note_pattern().index(curr_note.pitch_class) < scale.get_note_pattern().index(end_note.pitch_class))):
             curr_note = self._next_note(curr_note, scale)
             notes.append(curr_note)
         
