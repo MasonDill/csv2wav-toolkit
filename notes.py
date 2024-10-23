@@ -1,4 +1,5 @@
 import argparse as ap
+from copy import copy
 from enum import Enum
 
 # Frequencies given for the 4th octave of the chromatic scale
@@ -22,8 +23,8 @@ class Step(Enum):
     WHOLE = 2 
 
 CHROMATIC_SCALE = list(CHROMATIC_FREQ_MAP.keys())   
-WESTERN_HEPTATONIC_MAJOR_SCALE = (Step.WHOLE, Step.WHOLE, Step.HALF, Step.WHOLE, Step.WHOLE, Step.WHOLE, Step.HALF)
-WESTERN_HEPTATONIC_MINOR_SCALE = (Step.WHOLE, Step.HALF, Step.WHOLE, Step.WHOLE, Step.HALF, Step.WHOLE, Step.WHOLE)
+WESTERN_HEPTATONIC_MAJOR_SCALE = (Step.WHOLE, Step.WHOLE, Step.HALF, Step.WHOLE, Step.WHOLE, Step.WHOLE)
+WESTERN_HEPTATONIC_MINOR_SCALE = (Step.WHOLE, Step.HALF, Step.WHOLE, Step.WHOLE, Step.HALF, Step.WHOLE)
 
 # Helper function: Get the pitch Class from a Note (e.g. C0) or Scale (e.g. CM)
 def parse_pitch_class(haystack: str) -> str:
@@ -64,7 +65,9 @@ class Note:
     def get_freq(self):
         base_freq = CHROMATIC_FREQ_MAP[self.pitch_class]
         return base_freq * (2 ** (self.octave-4))
-        
+    
+    def __str__(self):
+        return f"{self.pitch_class}{self.octave}"
 
 class Scale:
     def __init__(self, pair: str):
@@ -103,20 +106,20 @@ class Scale:
 
 class Chord:
     def __init__(self, scale: Scale, root_note: Note, end_note: Note):
-        notes = [[root_note]]
+        notes = [root_note]
 
         curr_note = root_note
-        while(curr_note.octave <= end_note.octave and scale.get_note_pattern().index(curr_note) < scale.get_note_pattern().index(end_note)):
+        while((curr_note.octave <= end_note.octave) or (scale.get_note_pattern().index(curr_note.pitch_class) <= scale.get_note_pattern().index(end_note.pitch_class))):
             curr_note = self._next_note(curr_note, scale)
             notes.append(curr_note)
         
         self.notes = notes
 
     def _next_note(self, note: Note, scale: Scale) -> Note:
-        if note.pitch_class not in Scale.get_note_pattern():
+        if note.pitch_class not in scale.get_note_pattern():
             raise ValueError(f"Note {note.pitch_class} does not exist in scale {scale.start_pitch_class}{scale.type}")
 
-        next_pitch_class_index = scale.get_note_pattern().index(note)+2
+        next_pitch_class_index = scale.get_note_pattern().index(note.pitch_class)+2
 
         if(next_pitch_class_index >= len(scale.get_note_pattern())):
             next_octave = note.octave+1
@@ -126,17 +129,21 @@ class Chord:
         next_pitch_class_index %= len(scale.get_note_pattern())
         next_pitch_class = scale.get_note_pattern()[next_pitch_class_index]
 
-        return Note(next_pitch_class, next_octave)
+        next_note = copy(note)
+        next_note.pitch_class = next_pitch_class
+        next_note.octave = next_octave
+
+        return next_note
 
     def __str__(self) -> str:
-        return str(self.notes)
+        return ' '.join([str(note) for note in self.notes])
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog='notes', description='Get information about notes, frequencies, scales, or extended chords')
     parser.add_argument('-n', '--notes', nargs='+', type=str, help='Print frequency of a set of notes: <note><octave> <note><octave> <note><octave>...')
     parser.add_argument('-a', '--all', action='store_true', help='Print all notes')
     parser.add_argument('-s', '--scale', type=str, help='Scale: <root>[M|m]')
-    parser.add_argument('--extended-chord', nargs='+', type=str, help='Print notes of an extended chord: <root>[M|m] <start note><octave> <end note><octave>')
+    parser.add_argument('-c', '--chord', nargs='+', type=str, help='Print notes of a chord: <root>[M|m] <start note><octave> <end note><octave>')
     args = parser.parse_args()
 
     if args.all:
@@ -161,9 +168,9 @@ if __name__ == '__main__':
                 exit()
         print(scale.get_note_pattern())
     
-    elif args.extended_chord:
-        scale = Scale(args.extended_chord[0])
-        root_note = Note(args.extended_chord[1])
-        end_note = Note(args.extended_chord[2])
+    elif args.chord:
+        scale = Scale(args.chord[0])
+        root_note = Note(args.chord[1])
+        end_note = Note(args.chord[2])
         chord = Chord(scale, root_note, end_note)
         print(chord)
