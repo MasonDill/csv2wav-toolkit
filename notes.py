@@ -1,6 +1,7 @@
 import argparse as ap
 from enum import Enum
 
+# Frequencies given for the 4th octave of the chromatic scale
 CHROMATIC_FREQ_MAP = {
     'C': 261.63,
     'C#': 277.18,
@@ -40,7 +41,7 @@ class Scale:
         
         return scale_notes
 
-def get_center_note_freq(note):
+def get_middle_note_freq(note):
     if note not in CHROMATIC_FREQ_MAP:
         raise ValueError("Invalid note")
     return CHROMATIC_FREQ_MAP[note]
@@ -49,7 +50,7 @@ def get_freq_octave(freq, octave):
     return freq * (2 ** (octave-4))
 
 def get_note_freq(note, octave):
-    base_freq = get_center_note_freq(note)
+    base_freq = get_middle_note_freq(note)
     return get_freq_octave(base_freq, octave)
 
 def next_tone(note, octave, scale):
@@ -78,11 +79,14 @@ def create_extended_chord(scale, root_note, low_octave, end_note, high_octave):
 
 def parse_note(haystack: str) -> str:
     note = ''
+
+    note_end_index = 0
     for char in haystack:
         char = char.upper()
-        if not(char.isalpha() or char == '#'):
+        if not(char in ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G']):
             break
         note += char
+        note_end_index += 1
     
     if (len(note) == 2) and (note[1] == 'B') and (note[0] not in ['C', 'F']):
         previous_index = CHROMATIC_SCALE.index(note[0]) - 1
@@ -91,18 +95,10 @@ def parse_note(haystack: str) -> str:
     if note not in CHROMATIC_SCALE:
         raise ValueError(f"Invalid note '{note}'. Provide a note from the western chromatic scale.")
     
-    return note
+    return note, note_end_index
 
 def parse_note_octave_pair(pair: str) -> tuple[str, int]:
-    note = parse_note(pair)
-
-    note_end_index = 0
-    for char in pair:
-        char = char.upper()
-        if char.isalpha() or char in ['#', 'B']:
-            note_end_index += 1
-            continue
-        break
+    note, note_end_index = parse_note(pair)
     octave = pair[note_end_index:]
     
     if not octave:
@@ -116,17 +112,15 @@ def parse_note_octave_pair(pair: str) -> tuple[str, int]:
     return (note, octave)
 
 def parse_scale(pair):
-    root = pair[:-1]
-    if root not in CHROMATIC_SCALE:
-        ap.ArgumentError("Invalid root note: " +root)
+    root, note_end_index = parse_note(pair)
 
-    scale_type = pair[-1]
+    scale_type = pair[note_end_index:]
     if(scale_type == "M"):
         scale_type = WESTERN_HEPTATONIC_MAJOR_SCALE
     elif(scale_type == "m"):
         scale_type = WESTERN_HEPTATONIC_MINOR_SCALE
     else:
-        ap.ArgumentError("Invalid scale type: " +scale_type)
+        raise ValueError("Invalid scale type " +scale_type)
 
     return Scale(root, scale_type)
 
@@ -153,7 +147,11 @@ if __name__ == '__main__':
             print(get_note_freq(note, octave))
 
     elif args.scale:
-        scale = parse_scale(args.scale)
+        try:
+            scale = parse_scale(args.scale)
+        except ValueError as e:
+                print(f"Error: {e}")
+                exit()
         print(scale.get_notes())
     
     elif args.extended_chord:
