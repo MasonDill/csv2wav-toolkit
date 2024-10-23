@@ -6,7 +6,7 @@ import scipy as sp
 
 import common
 
-def dso(data, sample_rate=44100, bit_depth=16, channels=1, duration=None):
+def dso(data, output_file, sample_rate=44100, bit_depth=16, channels=1, duration=None):
     #check paramter sanity
     if sample_rate <= 0:
         raise ValueError("sample_rate must be greater than 0")
@@ -36,13 +36,14 @@ def dso(data, sample_rate=44100, bit_depth=16, channels=1, duration=None):
     plt.gcf().set_size_inches(18.5, 10.5)
 
     #save the plot
-    plt.savefig('dso.svg')
+    time_plot_file = output_file + "_time.svg"
+    plt.savefig(time_plot_file)
 
     #plot the fourier transform
-    fourier_transform(data, sample_rate, duration)
+    fourier_transform(data, sample_rate, duration, output_file)
 
 
-def fourier_transform(data, sample_rate, duration):
+def fourier_transform(data, sample_rate, duration, output_file):
     # Perform Fourier transform
     fft_result = np.fft.fft(data)
     frequencies = np.fft.fftfreq(len(data)) * sample_rate
@@ -59,7 +60,8 @@ def fourier_transform(data, sample_rate, duration):
     plt.ylabel('Amplitude')
 
     #save the plot
-    plt.savefig('fourier.svg')
+    freq_plot_file = output_file + "_freq.svg"
+    plt.savefig(freq_plot_file)
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog='dso', description='Digital Signal Oscilloscope')
