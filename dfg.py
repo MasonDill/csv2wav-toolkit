@@ -1,7 +1,7 @@
 #digital function generator
 import numpy as np
-import argparse as ap
 import scipy as sp
+import argparse as ap
 
 import common
 import cds
