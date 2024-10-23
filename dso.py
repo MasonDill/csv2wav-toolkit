@@ -17,8 +17,6 @@ def dso(data, output_file, sample_rate=44100, bit_depth=16, channels=1, duration
     
     if duration is None:
         duration = data.size / sample_rate
-
-    print("Duration:", duration)
     
     #for simplicity, we will assume the signal sample rate is the same as the oscilloscope sample rate
     #create a linspace for the x axis where each segment is 1/sample_rate
@@ -36,7 +34,7 @@ def dso(data, output_file, sample_rate=44100, bit_depth=16, channels=1, duration
     plt.gcf().set_size_inches(18.5, 10.5)
 
     #save the plot
-    time_plot_file = output_file + "_time.svg"
+    time_plot_file = output_file + "_time.png"
     plt.savefig(time_plot_file)
 
     #plot the fourier transform
@@ -47,20 +45,22 @@ def fourier_transform(data, sample_rate, duration, output_file):
     # Perform Fourier transform
     fft_result = np.fft.fft(data)
     frequencies = np.fft.fftfreq(len(data)) * sample_rate
+    magnitudes = np.abs(fft_result)
+
+    threshold = np.max(magnitudes) / np.sqrt(2)  # using 3 dB rule 
+    significant_freq_indices = np.where(magnitudes >= threshold)[0]
+
+    min_freq = np.min(frequencies[significant_freq_indices])
+    max_freq = np.max(frequencies[significant_freq_indices])
 
     plt.clf()
-    # Plot the Fourier transform
-    plt.plot(frequencies, np.abs(fft_result))
-
-    #upscale the plot
+    plt.plot(frequencies, magnitudes)
+    plt.xlim([min_freq, max_freq])  # Set X-axis from min to max significant frequency
     plt.gcf().set_size_inches(18.5, 10.5)
-
-    #label the plot
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude')
 
-    #save the plot
-    freq_plot_file = output_file + "_freq.svg"
+    freq_plot_file = output_file + "_freq.png"
     plt.savefig(freq_plot_file)
 
 if __name__ == '__main__':
