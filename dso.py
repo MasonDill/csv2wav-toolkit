@@ -34,7 +34,7 @@ def dso(data, output_file, sample_rate=44100, bit_depth=16, channels=1, duration
     plt.gcf().set_size_inches(18.5, 10.5)
 
     #save the plot
-    time_plot_file = output_file + "_time.png"
+    time_plot_file = output_file
     plt.savefig(time_plot_file)
 
     #plot the fourier transform
